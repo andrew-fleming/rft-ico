@@ -35,5 +35,33 @@ contract RFT is ERC20 {
         admin = msg.sender;
     }
 
+    function startIco() external {
+        require(msg.sender == admin, "You are not the admin");
+        nft.transferFrom(msg.sender, address(this), tokenId);
+        icoEnd = block.timestamp + 7 * 86400; // *86400 = Seconds in a day
+    }
+
+    function buyShares(uint256 shareAmt) external {
+        require(icoEnd > 0, "The ICO has not started");
+        require(block.timestamp <= icoEnd, "The ICO ended already");
+        require(totalSupply() + shareAmt <= icoShareSupply, "Not enough shares");
+        uint daiAmount = shareAmt * icoSharePrice;
+        dai.transferFrom(msg.sender, address(this), daiAmount);
+        _mint(msg.sender, shareAmt);
+    }
+
+    function withdrawProfits() external {
+        require(msg.sender == admin, "You are not the admin");
+        require(block.timestamp > icoEnd, "The ICO has not finished yet");
+        uint daiBal = dai.balanceOf(address(this));
+        if(daiBal > 0){
+            dai.transfer(admin, daiBal);
+        }
+        
+        uint unsoldShares = icoShareSupply - totalSupply();
+        if(unsoldShares > 0){
+            _mint(admin, unsoldShares);
+        }
+    }
 
 }
