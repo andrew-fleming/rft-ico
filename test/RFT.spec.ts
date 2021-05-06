@@ -20,9 +20,10 @@ describe("RFT-ICO Contract", () => {
         let config: object = {
 
         }
-
-        const RFT = await ethers.getContractFactory("RFT");
+        const MockDai = await ethers.getContractFactory("MockDai");
+        const MockNFT = await ethers.getContractFactory("MockNFT");
+        const RFTContract = await ethers.getContractFactory("RFT");
         [owner, alice, bob, carol, dave] = await ethers.getSigners();
-        const instance = await RFT.deploy()
+        const rftContract = await RFTContract.deploy()
     })
 })
