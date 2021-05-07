@@ -1,10 +1,12 @@
 import { ethers } from "hardhat";
-import chai, { expect, assert } from "chai";
+import chai, { expect } from "chai";
 import { Contract, BigNumber } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { solidity } from "ethereum-waffle";
+import { time } from "@openzeppelin/test-helpers"
 
 chai.use(solidity);
+
 
 describe("RFT-ICO Contract", () => {
 
@@ -139,7 +141,7 @@ describe("RFT-ICO Contract", () => {
         it("should revert tx without allowance", async() => {
             let shares = 1
             await expect(rftContract.connect(bob).buyShares(shares))
-                .to.be.revertedWith('transfer amount exceeds allowance');
+                .to.be.revertedWith("transfer amount exceeds allowance");
         })
 
         it("should allow all investors to buy shares and subtract dai correctly", async() => {
@@ -177,10 +179,36 @@ describe("RFT-ICO Contract", () => {
 
             expect(await rftContract.balanceOf(dave.address))
                 .to.eq("40")
+
+            expect(await rftContract.totalSupply())
+                .to.eq("62")
+        })
+
+        it("should revert withdrawal during ICO", async() => {
+            await expect(rftContract.withdrawProfits())
+                .to.be.revertedWith("The ICO has not finished yet")
+        })
+
+        it("should not allow users to buy more shares than the total supply", async() => {
+            await expect(rftContract.connect(alice).buyShares(shareSupply))
+                .to.be.revertedWith("Not enough shares")
         })
     })
 
+    describe("Ending ICO", async() => {
+        it("should fast-forward a week ahead to close out ICO", async() => {
+            await expect(rftContract.withdrawProfits()).to.be.reverted
 
+            await time.increase(7 * 86400 + 1) 
+            expect(await rftContract.withdrawProfits()).to.be.ok
+        })
 
+        it("should send remaining shares to the admin", async() => {
+            expect(await rftContract.totalSupply())
+                .to.eq(shareSupply)
 
+            expect(await rftContract.balanceOf(owner.address))
+                .to.eq("63")
+        })
+    })
 })
