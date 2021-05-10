@@ -35,12 +35,19 @@ contract RFT is ERC20 {
         admin = msg.sender;
     }
 
+    /**
+    * @dev Initializes the ICO by transferring an NFT to the contract. The end of the ICO is set as 
+    *      the timestamp + 7 (days) x 86400 (seconds in a day).
+     */
     function startIco() external {
         require(msg.sender == admin, "You are not the admin");
         nft.transferFrom(msg.sender, address(this), tokenId);
         icoEnd = block.timestamp + 7 * 86400; // *86400 = Seconds in a day
     }
 
+    /**
+    * @dev A function for buying shares of the contract-owned NFT. 
+     */
     function buyShares(uint256 shareAmt) external {
         require(icoEnd > 0, "The ICO has not started");
         require(block.timestamp <= icoEnd, "The ICO ended already");
@@ -50,6 +57,10 @@ contract RFT is ERC20 {
         _mint(msg.sender, shareAmt);
     }
 
+    /**
+    * @dev An admin function for withdrawing funds (specifically, Dai in this implementation) post-ICO. 
+    *      Unsold shares are minted for the admin at the end of the ICO. 
+     */
     function withdrawProfits() external {
         require(msg.sender == admin, "You are not the admin");
         require(block.timestamp > icoEnd, "The ICO has not finished yet");
